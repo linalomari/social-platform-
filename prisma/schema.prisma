@@ -1,0 +1,80 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id         Int          @id @default(autoincrement())
+  username   String       @unique
+  password   String
+  isDeleted  Boolean      @default(false)
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+  posts      Post[]
+  userGroups UserGroups[]
+  comments   Comment[]
+}
+
+model Post {
+  id        Int       @id @default(autoincrement())
+  userId    Int
+  groupId   Int
+  text      String
+  isPublic  Boolean   @default(false)
+  user      User      @relation(fields: [userId], references: [id])
+  group     Group     @relation(fields: [groupId], references: [id])
+  comments  Comment[]
+  isDeleted Boolean   @default(false)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Group {
+  id          Int          @id @default(autoincrement())
+  name        String
+  description String?
+  isPublic    Boolean      @default(false)
+  posts       Post[]
+  userGroups  UserGroups[]
+  isDeleted   Boolean      @default(false)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+model UserGroups {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  groupId   Int
+  role      Role     @default(MEMBER)
+  user      User     @relation(fields: [userId], references: [id])
+  group     Group    @relation(fields: [groupId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, groupId])
+}
+
+model Comment {
+  id        Int      @id @default(autoincrement())
+  postId    Int
+  authorId  Int
+  text      String
+  post      Post     @relation(fields: [postId], references: [id])
+  user      User     @relation(fields: [authorId], references: [id])
+  isDeleted Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum Role {
+  MEMBER
+  ADMIN
+  USER
+}
